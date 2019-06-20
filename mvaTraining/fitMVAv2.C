@@ -38,7 +38,7 @@ pair<double, double> CountEventsWithFit(TH1 *hist);
 
 int fitMVAv2(TString file_ = "ntuples/ntuBsDG0MC2018.root"
     , int nEvents_ = -1
-    , int nBinCal_ = 20 // number of bin for calibration
+    , int nBinCal_ = 25 // number of bin for calibration
     , TString method_ = "DNNOsMuonHLTJpsiMu"
     , bool useTightSelection_ = true
     , float muonIDwp_ = 0.21
@@ -48,7 +48,7 @@ int fitMVAv2(TString file_ = "ntuples/ntuBsDG0MC2018.root"
     gErrorIgnoreLevel = kWarning;
     gStyle->SetOptStat(10); //ksiourmen
     gStyle->SetOptFit(1); //pcev
-    ROOT::Math::MinimizerOptions::SetDefaultMaxFunctionCalls( 5000 );
+    ROOT::Math::MinimizerOptions::SetDefaultMaxFunctionCalls( 10000 );
 
     cout<<"----- Parameters -----"<<endl;
     cout<<"file_ = "<<file_<<endl;
@@ -417,7 +417,7 @@ int fitMVAv2(TString file_ = "ntuples/ntuBsDG0MC2018.root"
     gCal->SetMaximum(1.);
     gCal->SetMinimum(0.);
     gCal->GetXaxis()->SetLimits(0.,1.);
-    gCal->SetTitle("");
+    gCal->SetTitle("calibration " + process_);
     gCal->GetXaxis()->SetTitle("mistag calc.");
     gCal->GetYaxis()->SetTitle("mistag meas.");
     gCal->Draw("AP");
@@ -444,6 +444,16 @@ int fitMVAv2(TString file_ = "ntuples/ntuBsDG0MC2018.root"
     y0_->Draw("SAME");
 
     c1->Print("calibration" + process_ + ".pdf");
+
+    auto *c2 = new TCanvas();
+    gPad->SetGrid();
+    mva->SetMarkerStyle(20);
+    mva->SetMarkerSize(.75);
+    mva->SetTitle("dnnDistribution " + process_);
+    mva->GetXaxis()->SetTitle("dnn score (right tag probability)");
+    mva->GetXaxis()->SetNdivisions(10+100*(nBins_/10), kFALSE);
+    mva->Draw("PL");
+    c2->Print("dnnDistribution " + process_ + ".pdf");
 
     //FUNCTIONS
     auto *fo = new TFile("OSMuonTaggerCalibration" + process_ + ".root", "RECREATE");
@@ -552,8 +562,11 @@ pair<double, double> CountEventsWithFit(TH1 *hist)
     auto c5 = new TCanvas();
     hist->SetMarkerStyle(20);
     hist->SetMarkerSize(.75);
-    TFitResultPtr r = hist->Fit("func","MRLSQ");
-
+    TFitResultPtr r = hist->Fit("func","RLSQ");
+    int fitstatus = r;
+    int covstatus = r->CovMatrixStatus();
+    if(fitstatus != 0) cout<<"STATUS of "<<title<<" --> "<<fitstatus<<endl;
+    if(covstatus != 3) cout<<"COV STATUS of "<<title<<" --> "<<covstatus<<endl;
     TF1 *fit = hist->GetFunction("func");
     if(isTot){
         mean_ = fit->GetParameter("mean");
