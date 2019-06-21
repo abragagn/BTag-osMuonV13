@@ -32,13 +32,12 @@ TString process_;
 TString dirPath_;
 double min_, max_, x1_, x2_;
 double mean_, sigma1_, sigma2_;
-int nBins_ = 50;
+int nBins_ = 100;
 
 pair<double, double> CountEventsWithFit(TH1 *hist);
 
-int fitMVAv2(TString file_ = "ntuples/ntuBsDG0MC2018.root"
+int evaluateCalibration(TString file_ = "ntuples/ntuBuData2018.root"
     , int nEvents_ = -1
-    , int nBinCal_ = 25 // number of bin for calibration
     , TString method_ = "DNNOsMuonHLTJpsiMu"
     , bool useTightSelection_ = true
     , float muonIDwp_ = 0.21
@@ -55,7 +54,6 @@ int fitMVAv2(TString file_ = "ntuples/ntuBsDG0MC2018.root"
     cout<<"method_ = "<<method_<<endl;
     cout<<"useTightSelection_ = "<<useTightSelection_<<endl;
     cout<<"nEvents_ = "<<nEvents_<<endl;
-    cout<<"nBinCal_ = "<<nBinCal_<<endl;
 
     cout<<endl<<"----- BEGIN CODE"<<endl;
     TString path = "/lustre/cmswork/abragagn/BPH/BTag/osMuonV13/src/PDAnalysis/Ntu/bin/";
@@ -102,28 +100,20 @@ int fitMVAv2(TString file_ = "ntuples/ntuBsDG0MC2018.root"
         dirPath_ += "2018";
     }
 
+    cout<<"process_ = "<<process_<<endl;
+
+    // CALIBRATION
+    auto *f2 = new TFile("OSMuonTaggerCalibration" + process_ + ".root");
+    f2->cd();
+    TF1 *fCal = (TF1*)f2->Get("osMuonCal");
+    f2->Close();
+    delete f2;
+    f->cd();
+
     cout<<"----- FILE OPEN"<<endl;
 
-    // PER-EVENT VARIABLES
-    double evtW[2] = {-1., -1.}; // per-event mistag rate
-    double totalP = 0.; // total tagging power
-    double totalPbinned = 0.;
-
-    double pass = (1.-0.)/nBinCal_; // (1-0) -> mva score range
-
-    TH1F *hMassCalRT[nBinCal_];
-    TH1F *hMassCalWT[nBinCal_];
-    double *wCalc = new double[nBinCal_]; // measured mistag rate
-    double *wCalcEdgeL = new double[nBinCal_];
-    double *wCalcEdgeH = new double[nBinCal_];
-
-    for(int i=0;i<nBinCal_;++i){
-        hMassCalRT[i] = new TH1F(TString::Format("hMassCalRT%i", i),TString::Format("hMassCalRT%i", i),nBins_, min_, max_);
-        hMassCalWT[i] = new TH1F(TString::Format("hMassCalWT%i", i),TString::Format("hMassCalWT%i", i),nBins_, min_, max_);
-        wCalc[i] = 0.;
-        wCalcEdgeL[i] = 0.;
-        wCalcEdgeH[i] = 0;
-    }
+    double totalP = 0.;
+    double totalPerr = 0;
 
     //MVA VARIABLES
     float muoPt;
@@ -193,9 +183,9 @@ int fitMVAv2(TString file_ = "ntuples/ntuBsDG0MC2018.root"
 
     //HISTOGRAMS BOOKING
     int nBinsMva = 100;
-    auto *mva    = new TH1F( "mva",    "mva",    nBinsMva, 0.0, 1.0 );
-    auto *mva_RT = new TH1F( "mva_RT", "mva_RT", nBinsMva, 0.0, 1.0 );
-    auto *mva_WT = new TH1F( "mva_WT", "mva_WT", nBinsMva, 0.0, 1.0 );
+    auto *mistag    = new TH1F( "mistag",    "mistag",    nBinsMva, 0.0, 1.0 );
+    auto *mistag_RT = new TH1F( "mistag_RT", "mistag_RT", nBinsMva, 0.0, 1.0 );
+    auto *mistag_WT = new TH1F( "mistag_WT", "mistag_WT", nBinsMva, 0.0, 1.0 );
     auto *hMassTot    = new TH1F( "hMassTot","hMassTot", nBins_, min_, max_ );
     auto *hMassRT  = new TH1F( "hMassRT","hMassRT", nBins_, min_, max_ );
     auto *hMassWT  = new TH1F( "hMassWT","hMassWT", nBins_, min_, max_ );
@@ -227,28 +217,26 @@ int fitMVAv2(TString file_ = "ntuples/ntuBsDG0MC2018.root"
 
         //TAGGING
         mvaValue = reader.EvaluateMVA(method_);
-        mva->Fill(mvaValue, evtWeight);
-        evtW[0] = 1-mvaValue;
-        totalP += pow(1.-2.*evtW[0], 2)*evtWeight;
+        double evtWpred = 1. - mvaValue;
+        double evtW = fCal->Eval(evtWpred); // calibration
+        double evtWerr = sqrt(pow(fCal->GetParError(0),2)+pow((fCal->GetParError(1))*(evtWpred),2));
+        totalP += pow(1.-2.*evtW, 2)*evtWeight;
+        double errp = sqrt( pow(8*evtW-4,2)*pow(evtWerr,2) );
+        totalPerr += pow(evtWeight*errp,2);
+
+        cout<<evtWpred<<"   "<<evtW<<" +- "<<evtWerr<<endl;
+
+        mistag->Fill(evtW, evtWeight);
 
         int evtTag = -1*osMuonCharge;
         bool isTagRight = TMath::Sign(1, ssbLund) == evtTag;
         if(isTagRight!=osMuonTag) cout<<"!!?? isTagRight != osMuonTag"<<endl;
 
-        for(int j=0;j<nBinCal_;++j){
-            if( (evtW[0]>=(double)j*pass) && (evtW[0]<((double)j*pass+pass)) ){
-                if(isTagRight) hMassCalRT[j]->Fill(ssbMass, evtWeight);
-                else           hMassCalWT[j]->Fill(ssbMass, evtWeight);
-                wCalc[j] += evtW[0]*evtWeight;
-                break;
-            }
-        }
-
         if(isTagRight){
-            mva_RT->Fill(mvaValue, evtWeight);
+            mistag_RT->Fill(evtW, evtWeight);
             hMassRT->Fill(ssbMass, evtWeight);
         }else{
-            mva_WT->Fill(mvaValue, evtWeight);
+            mistag_WT->Fill(evtW, evtWeight);
             hMassWT->Fill(ssbMass, evtWeight);
         }
     }
@@ -282,194 +270,16 @@ int fitMVAv2(TString file_ = "ntuples/ntuBsDG0MC2018.root"
     cout<<"Base mistag = "<<100*wBase<<"%"<<endl;
     cout<<"Base power = "<<100*pBase<<"%"<<endl;
 
-    totalP /= (double)(nRT+nWT+nNT);
-    cout<<endl;
-    cout<<"Per-event-mistag power (not calibrated) = "<<100.*totalP<<"% (+"<<100*(totalP - pBase)/pBase<<"%)"<<endl;
-    cout<<endl;
-
-    // CALIBRATION
-    for(int j=0;j<nBinCal_;++j){
-        wCalc[j] /= (hMassCalRT[j]->Integral() + hMassCalWT[j]->Integral());
-    }
-
-    vector<double> vX;
-    vector<double> vY;
-    vector<double> vEX;
-    vector<double> vEXL;
-    vector<double> vEXH;
-    vector<double> vEY;
-    vector<double> vEYL;
-    vector<double> vEYH;
-
-    int minEntries = 0;
-    if(isData) minEntries = 20;
-    int rebinThr = 1500;
-
-    for(int j=0;j<nBinCal_;++j){
-        pair<double, double> calRT; // .first = nEvt; .second = sigma(nEvt)
-        pair<double, double> calWT;
-        double wMeas;
-        double wMeasErr;
-        double wMeasErrL;
-        double wMeasErrH;
-
-        calRT.first = hMassCalRT[j]->Integral();
-        calWT.first = hMassCalWT[j]->Integral();
-        calRT.second = sqrt(calRT.first);
-        calWT.second = sqrt(calWT.first);
-
-        if( calRT.first<=minEntries && calWT.first<=minEntries ) continue;
-
-        if(isData){
-            if(calRT.first<rebinThr) hMassCalRT[j]->Rebin();
-            if(calWT.first<rebinThr) hMassCalWT[j]->Rebin();
-            if(calRT.first >= minEntries)
-                calRT = CountEventsWithFit(hMassCalRT[j]);
-            if(calWT.first >= minEntries)
-                calWT = CountEventsWithFit(hMassCalWT[j]);
-            if(calRT.second < 1 ) calRT.second = 2*sqrt(calRT.first);
-            if(calWT.second < 1 ) calWT.second = 2*sqrt(calWT.first);
-            wMeas = calWT.first/(calWT.first + calRT.first);
-            wMeasErr = sqrt(pow(calWT.first,2)*pow(calRT.second,2) 
-                          + pow(calRT.first,2)*pow(calWT.second,2))/pow(calRT.first+calWT.first,2);
-
-            wMeasErrH = wMeasErr;
-            wMeasErrL = wMeasErr;
-            if(wMeas + wMeasErrH > 1.) wMeasErrH = 1. - wMeas;
-            if(wMeas - wMeasErrL < 0.) wMeasErrL = wMeas - 0.;
-        }else{
-            wMeas = calWT.first/(calWT.first + calRT.first);
-            wMeasErrH = TEfficiency::AgrestiCoull(calWT.first+calRT.first, calWT.first,0.6827,true) - wMeas;
-            wMeasErrL = wMeas - TEfficiency::AgrestiCoull(calWT.first+calRT.first, calWT.first,0.6827,false);
-            wMeasErr = (wMeasErrH + wMeasErrL)/2;
-        }
-
-        vX.push_back( wCalc[j] );
-        vEXL.push_back( wCalc[j] - ((double)j*pass) );
-        vEXH.push_back( ((double)j*pass+pass) - wCalc[j] );
-        vY.push_back( wMeas ); // measured mistag
-        vEY.push_back(wMeasErr);
-        vEYL.push_back(wMeasErrL);
-        vEYH.push_back(wMeasErrH);
-
-        totalPbinned += (calRT.first+calWT.first)*pow(1-2*wMeas,2);
-        cout<<"BIN "<<j<<" -- wCalc "<<wCalc[j];
-        cout<<" -- nRT "<<(int)calRT.first<<" +- "<<(int)calRT.second<<" -- nWT "<<(int)calWT.first<<" +- "<<(int)calWT.second;
-        cout<<" -- wMeas "<<wMeas <<" +- "<<wMeasErr<<endl<<endl;
-    }
-
-    totalPbinned /= (double)nTot;
+    double park = totalP;
+    totalP /= nTot;
+    totalPerr /= pow((double)nTot,2);
+    totalPerr += nTot*pow(park,2)/pow((double)nTot,4);
+    totalPerr = sqrt(totalPerr);
 
     cout<<endl;
-    cout<<"Per-event-mistag power (calibrated bins) = "<<100.*totalPbinned<<"% (+"<<100*(totalPbinned - pBase)/pBase<<"%)"<<endl;
+    cout<<"Per-event-mistag power = "<<100.*totalP<<" +- "<<100.*totalPerr<<" % (+"<<100*(totalP - pBase)/pBase<<"%)"<<endl;
     cout<<endl;
 
-    cout<<endl;
-
-    auto *c1 = new TCanvas("c1","c1",1000,1600);
-    TPad *pad1 = new TPad("pad1", "",0.0,0.3,1.0,1.0);
-    TPad *pad2 = new TPad("pad2", "",0.0,0.0,1.0,0.3);
-    pad1->Draw();
-    pad2->Draw();
-    pad1->cd();
-    gPad->SetGrid();
-
-    auto *gCal = new TGraphAsymmErrors(vX.size(),&vX[0],&vY[0],0,0,&vEYL[0],&vEYH[0]);
-    auto *gCalErr = new TGraphAsymmErrors(vX.size(),&vX[0],&vY[0],&vEXL[0],&vEXH[0],&vEYL[0],&vEYH[0]);
-    auto *fCal = new TF1("osMuonCal","[0]+[1]*x",0.,1.);
-
-    gCal->Fit("osMuonCal");
-    fCal = gCal->GetFunction("osMuonCal");
-
-    double q = fCal->GetParameter(0);
-    double m = fCal->GetParameter(1);
-
-    cout<<endl;
-    cout<<"q = "<<q<<" +- "<<fCal->GetParError(0)<<" ["<<abs(q)/fCal->GetParError(0)<<" s.d.]"<<endl;
-    cout<<"m = "<<m<<" +- "<<fCal->GetParError(1)<<" ["<<abs(m-1)/fCal->GetParError(1)<<" s.d.]"<<endl;
-
-    vector<double> wResY;
-    vector<double> wResEY;
-    vector<double> wResEYH;
-    vector<double> wResEYL;
-    vector<double> wRatioY;
-    vector<double> wRatioEY;
-    vector<double> wRatioEYH;
-    vector<double> wRatioEYL;
-    double meanRes2 = 0.;
-    double sumweight = 0.;
-
-    for (unsigned int j=0;j<vX.size();++j){
-        double dev = vY[j] - fCal->Eval(vX[j]);
-        double sigma;
-        if(dev>=0) sigma = vEYL[j];
-        else       sigma = vEYH[j];
-
-        wResEYH.push_back(vEYH[j]/sigma);
-        wResEYL.push_back(vEYL[j]/sigma);
-        wResY.push_back(dev/sigma);
-        wResEY.push_back(1.);
-
-        double weight = 1/pow(sigma,2);
-        meanRes2 += pow(dev,2)*weight;
-        sumweight += weight;
-    }
-
-    meanRes2 /= sumweight;
-    cout<<"meanRes2 = "<<meanRes2<<endl;
-
-
-    auto *gCalRes = new TGraphAsymmErrors(vX.size(),&vX[0],&wResY[0],&vEXL[0],&vEXH[0],&wResEYL[0],&wResEYH[0]);
-
-    gCal->SetMarkerStyle(20);
-    gCal->SetMarkerSize(1);
-    gCal->SetMaximum(1.);
-    gCal->SetMinimum(0.);
-    gCal->GetXaxis()->SetLimits(0.,1.);
-    gCal->SetTitle("calibration " + process_);
-    gCal->GetXaxis()->SetTitle("mistag calc.");
-    gCal->GetYaxis()->SetTitle("mistag meas.");
-    gCal->Draw("AP");
-    gCalErr->Draw("EZ same");
-    fCal->Draw("same");
-    gPad->Modified(); gPad->Update();
-    TPaveStats *st = (TPaveStats*)gCal->FindObject("stats");
-    st->SetX1NDC(0.65);
-    st->SetX2NDC(0.95);
-    st->SetY1NDC(0.15);
-    st->SetY2NDC(0.30);
-    gPad->Modified(); gPad->Update();
-
-    pad2->cd();
-    gPad->SetGrid();
-    gCalRes->SetMarkerStyle(20);
-    gCalRes->SetMarkerSize(1);
-    gCalRes->GetXaxis()->SetLimits(0.0,1.02);
-    gCalRes->Draw("APZ");
-    gCalRes->SetTitle("");
-    gCalRes->GetYaxis()->SetTitle("# s.d.");
-    auto *y0_ = new TF1("","0.",0.,1.02);
-    y0_->SetLineColor(kBlack);
-    y0_->Draw("SAME");
-
-    c1->Print("calibration" + process_ + ".pdf");
-
-    auto *c2 = new TCanvas();
-    gPad->SetGrid();
-    mva->SetMarkerStyle(20);
-    mva->SetMarkerSize(.75);
-    mva->SetTitle("dnnDistribution " + process_);
-    mva->GetXaxis()->SetTitle("dnn score (right tag probability)");
-    mva->GetXaxis()->SetNdivisions(10+100*(int)(nBins_/10), kFALSE);
-    mva->Draw("PL");
-    c2->Print("dnnDistribution " + process_ + ".pdf");
-
-    //FUNCTIONS
-    auto *fo = new TFile("OSMuonTaggerCalibration" + process_ + ".root", "RECREATE");
-    fo->cd();
-    fCal->Write();
-    fo->Close();
-    delete fo;
     f->Close();
     delete f;
     return 1;
@@ -582,51 +392,6 @@ pair<double, double> CountEventsWithFit(TH1 *hist)
         sigma1_ = fit->GetParameter("sigma1");
         sigma2_ = fit->GetParameter("sigma2");
     }
-
-    hist->Draw("PE");
-    hist->SetMinimum(0);
-
-    // PLOTTING
-    TF1 *f1 = new TF1("f1","[0]*TMath::Gaus(x, [1], [2], true)", min_, max_);
-    TF1 *f2 = new TF1("f2","[0]*TMath::Gaus(x, [1], [2], true)", min_, max_);
-    TF1 *f4;
-    TF1 *f5 = new TF1("f5","[0]+[1]*x", min_, max_);
-
-    f1->SetParameters(fit->GetParameter("A1"),fit->GetParameter("mean"),fit->GetParameter("sigma1"));
-    f2->SetParameters(fit->GetParameter("A2"),fit->GetParameter("mean"),fit->GetParameter("sigma2"));
-
-    if(lowStat){
-        f4 = new TF1("f4","[0]", min_, max_);
-        f4->SetParameter(0, fit->GetParameter(5));
-    }
-
-    if(highStat){
-        f4 = new TF1("f4","[0]+[1]*x+[2]*TMath::Erfc([3]*(x-[4]))", min_, max_);
-        f4->SetParameters(fit->GetParameter(5),fit->GetParameter(6)
-                        ,fit->GetParameter(7),fit->GetParameter(8),fit->GetParameter(9));
-        f5->SetParameters(fit->GetParameter(5),fit->GetParameter(6));
-    }
-
-    if(!lowStat && !highStat){
-        f4 = new TF1("f4","[0]+[1]*x", min_, max_);
-        f4->SetParameters(fit->GetParameter(5),fit->GetParameter(6));
-    }
-
-    f1->SetLineColor(kBlue);
-    f2->SetLineColor(kViolet);
-    f4->SetLineColor(kGreen);
-    if(highStat) f5->SetLineColor(kOrange);
-    f1->SetLineStyle(2);
-    f2->SetLineStyle(2);
-    f4->SetLineStyle(2);
-    if(highStat) f5->SetLineStyle(2);
-
-    f1->Draw("same");
-    f2->Draw("same");
-    f4->Draw("same");
-    if(highStat) f5->Draw("same");
-
-    c5->Print(dirPath_ + "/" + title + ".pdf");
 
     double nEvt = fit->GetParameter(1);
     nEvt += fit->GetParameter(3);
