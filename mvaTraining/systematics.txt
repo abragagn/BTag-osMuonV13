@@ -1,0 +1,8 @@
+1.  calibration model bias i.e. chi2/dof != 1
+    studies: tried polynomials up to the fifth order, no significative in chi2/dof, best model: pol1
+    systematics strategy: add to the measured mistag fractions in the various bins a systematic error proportional to the statistics one in order to allign chi2/dof ~ 1
+        2018 -> syst ~ 35% stat
+        2017 -> syst ~ 20% stat
+    this lead to an increase of the uncertanties on the calibrated mistag prediction of the same order
+
+2. 
