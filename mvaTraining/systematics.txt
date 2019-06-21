@@ -5,4 +5,7 @@
         2017 -> syst ~ 20% stat
     this lead to an increase of the uncertanties on the calibrated mistag prediction of the same order
 
-2. 
+2.  differences between Bs and Bu calibration
+    studies: see spreadsheet
+    open question: include previous systematic?
+    systematics strategy: bin by bin error scaling to adress MC statistics (?)
