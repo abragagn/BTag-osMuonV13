@@ -33,12 +33,16 @@ TString dirPath_;
 double min_, max_, x1_, x2_;
 double mean_, sigma1_, sigma2_;
 int nBins_ = 50;
+bool output_ = true;
+double systematics_ = 0.;
 
 pair<double, double> CountEventsWithFit(TH1 *hist);
 
 int fitMVAv2(TString file_ = "ntuples/ntuBsDG0MC2018.root"
     , int nEvents_ = -1
-    , int nBinCal_ = 25 // number of bin for calibration
+    , int nBinCal_ = 50 // number of bin for calibration
+    , bool output_par = true
+    , bool useSyst_ = false
     , TString method_ = "DNNOsMuonHLTJpsiMu"
     , bool useTightSelection_ = true
     , float muonIDwp_ = 0.21
@@ -48,7 +52,8 @@ int fitMVAv2(TString file_ = "ntuples/ntuBsDG0MC2018.root"
     gErrorIgnoreLevel = kWarning;
     gStyle->SetOptStat(10); //ksiourmen
     gStyle->SetOptFit(1); //pcev
-    ROOT::Math::MinimizerOptions::SetDefaultMaxFunctionCalls( 10000 );
+    ROOT::Math::MinimizerOptions::SetDefaultMaxFunctionCalls( 15000 );
+    output_ = output_par;
 
     cout<<"----- Parameters -----"<<endl;
     cout<<"file_ = "<<file_<<endl;
@@ -95,11 +100,13 @@ int fitMVAv2(TString file_ = "ntuples/ntuBsDG0MC2018.root"
     if(file_.Contains("2017")){
         process_ = process_ + "2017";
         dirPath_ += "2017";
+        if(useSyst_) systematics_ = 0.2;
     }
 
     if(file_.Contains("2018")){
         process_ = process_ + "2018";
         dirPath_ += "2018";
+        if(useSyst_) systematics_ = 0.35;
     }
 
     cout<<"----- FILE OPEN"<<endl;
@@ -333,6 +340,8 @@ int fitMVAv2(TString file_ = "ntuples/ntuBsDG0MC2018.root"
             wMeasErr = sqrt(pow(calWT.first,2)*pow(calRT.second,2) 
                           + pow(calRT.first,2)*pow(calWT.second,2))/pow(calRT.first+calWT.first,2);
 
+            wMeasErr += wMeasErr*systematics_;
+
             wMeasErrH = wMeasErr;
             wMeasErrL = wMeasErr;
             if(wMeas + wMeasErrH > 1.) wMeasErrH = 1. - wMeas;
@@ -396,8 +405,6 @@ int fitMVAv2(TString file_ = "ntuples/ntuBsDG0MC2018.root"
     vector<double> wRatioEY;
     vector<double> wRatioEYH;
     vector<double> wRatioEYL;
-    double meanRes2 = 0.;
-    double sumweight = 0.;
 
     for (unsigned int j=0;j<vX.size();++j){
         double dev = vY[j] - fCal->Eval(vX[j]);
@@ -409,15 +416,7 @@ int fitMVAv2(TString file_ = "ntuples/ntuBsDG0MC2018.root"
         wResEYL.push_back(vEYL[j]/sigma);
         wResY.push_back(dev/sigma);
         wResEY.push_back(1.);
-
-        double weight = 1/pow(sigma,2);
-        meanRes2 += pow(dev,2)*weight;
-        sumweight += weight;
     }
-
-    meanRes2 /= sumweight;
-    cout<<"meanRes2 = "<<meanRes2<<endl;
-
 
     auto *gCalRes = new TGraphAsymmErrors(vX.size(),&vX[0],&wResY[0],&vEXL[0],&vEXH[0],&wResEYL[0],&wResEYH[0]);
 
@@ -452,7 +451,7 @@ int fitMVAv2(TString file_ = "ntuples/ntuBsDG0MC2018.root"
     y0_->SetLineColor(kBlack);
     y0_->Draw("SAME");
 
-    c1->Print("calibration" + process_ + ".pdf");
+    if(output_) c1->Print("calibration" + process_ + ".pdf");
 
     auto *c2 = new TCanvas();
     gPad->SetGrid();
@@ -462,14 +461,16 @@ int fitMVAv2(TString file_ = "ntuples/ntuBsDG0MC2018.root"
     mva->GetXaxis()->SetTitle("dnn score (right tag probability)");
     mva->GetXaxis()->SetNdivisions(10+100*(int)(nBins_/10), kFALSE);
     mva->Draw("PL");
-    c2->Print("dnnDistribution " + process_ + ".pdf");
+    if(output_) c2->Print("dnnDistribution " + process_ + ".pdf");
 
     //FUNCTIONS
-    auto *fo = new TFile("OSMuonTaggerCalibration" + process_ + ".root", "RECREATE");
-    fo->cd();
-    fCal->Write();
-    fo->Close();
-    delete fo;
+    if(output_){
+        auto *fo = new TFile("OSMuonTaggerCalibration" + process_ + ".root", "RECREATE");
+        fo->cd();
+        fCal->Write();
+        fo->Close();
+        delete fo;
+    }
     f->Close();
     delete f;
     return 1;
@@ -571,7 +572,7 @@ pair<double, double> CountEventsWithFit(TH1 *hist)
     auto c5 = new TCanvas();
     hist->SetMarkerStyle(20);
     hist->SetMarkerSize(.75);
-    TFitResultPtr r = hist->Fit("func","RLSQ");
+    TFitResultPtr r = hist->Fit("func","LRSQ");
     int fitstatus = r;
     int covstatus = r->CovMatrixStatus();
     if(fitstatus != 0) cout<<"STATUS of "<<title<<" --> "<<fitstatus<<endl;
@@ -626,7 +627,7 @@ pair<double, double> CountEventsWithFit(TH1 *hist)
     f4->Draw("same");
     if(highStat) f5->Draw("same");
 
-    c5->Print(dirPath_ + "/" + title + ".pdf");
+    if(output_) c5->Print(dirPath_ + "/" + title + ".pdf");
 
     double nEvt = fit->GetParameter(1);
     nEvt += fit->GetParameter(3);
