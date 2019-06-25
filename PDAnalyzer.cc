@@ -38,7 +38,6 @@ PDAnalyzer::PDAnalyzer() {
     setUserParameter( "outputFile", "ntu.root" );
 
     setUserParameter( "muonIdWp", "0.21" ); 
-    setUserParameter( "osMuonTagMvaMethod", "DNNOsMuonHLTJpsiMu_test241" ); 
 
     setUserParameter( "ptCut", "40.0" ); //needed for paolo's code for unknow reasons
 
@@ -65,7 +64,6 @@ void PDAnalyzer::beginJob() {
     getUserParameter( "outputFile", outputFile );
 
     getUserParameter( "muonIdWp", muonIdWp ); 
-    getUserParameter( "osMuonTagMvaMethod", osMuonTagMvaMethod );
 
     getUserParameter( "ptCut", ptCut ); //needed for paolo's code for unknow reasons
 
@@ -73,15 +71,19 @@ void PDAnalyzer::beginJob() {
     tWriter = new PDSecondNtupleWriter; // second ntuple
     tWriter->open( getUserParameter("outputFile"), "RECREATE" ); // second ntuple
 
-    setOsMuonMvaCut(muonIdWp);
-    setOsMuonDzCut( 1.0 );
+    // setOsMuonMvaCut(muonIdWp);
+    // setOsMuonDzCut( 1.0 );
 
     inizializeMuonMvaReader();
-//    inizializeOSMuonMvaTagReader( osMuonTagMvaMethod );
-//    bool osInit = inizializeOSMuonMvaMistagMethods();
+    inizializeOSMuonMvaReader();
+    bool osInit = inizializeOSMuonCalibration();
+    if(!osInit) cout<<endl<<"!!! FAILED TO INIZIALIZED TAG CALIBRATION"<<endl<<endl;
 
     if(process=="BsJPsiPhi") SetBsMassRange(5.20, 5.65);
     if(process=="BuJPsiK") SetBuMassRange(5.1, 5.65);
+
+    pTot = 0;
+    evtTot = 0;
 
     return;
 
@@ -237,6 +239,7 @@ bool PDAnalyzer::analyze( int entry, int event_file, int event_tot ) {
     if(ssbPVT < 0) return false;
 
     setVtxForTag(ssbSVT, ssbPVT);
+    evtTot += evtWeight;
 
     //FILLING SS
     (tWriter->ssbPt) = tB.Pt();
@@ -281,10 +284,13 @@ bool PDAnalyzer::analyze( int entry, int event_file, int event_tot ) {
     }
 
     (tWriter->osMuon) = 1;
-    // float osMuonTagMvaValue = getOsMuonTagMvaValue();
-    // pair<float,float> osMuonTagMistag = getOsMuonTagMistagProb(2);
-    // (tWriter->osMuonTagMvaValue) = osMuonTagMvaValue;
-    // (tWriter->osMuonTagMistag) = osMuonTagMistag.first;
+    float osMuonTagMvaValue = getOsMuonTagMvaValue();
+    pair<float,float> osMuonTagMistag = getOsMuonTagMistagProb();
+    (tWriter->osMuonTagMvaValue) = osMuonTagMvaValue;
+    (tWriter->osMuonTagMistag) = osMuonTagMistag.first;
+
+    pTot += evtWeight*pow(1-2*osMuonTagMistag.first,2);
+    cout<<osMuonTagMistag.first<<" +- "<<osMuonTagMistag.second<<endl;
 
     hmass_ssB_os->Fill(svtMass->at(ssbSVT), evtWeight);
 
@@ -608,7 +614,8 @@ void PDAnalyzer::endJob() {
         cout<< CountEventsWithFit(hmass_ssB, process)<<" "<<eff*100<<" "<<w*100<<" "<<power*100<<endl;
     }
 
-
+    pTot /= evtTot;
+    cout<<"Per Event Tagging Power = "<<100*pTot<<"%"<<endl;
 
     return;
 }

@@ -40,7 +40,7 @@ pair<double, double> CountEventsWithFit(TH1 *hist);
 
 int fitMVAv2(TString file_ = "ntuples/ntuBsDG0MC2018.root"
     , int nEvents_ = -1
-    , int nBinCal_ = 50 // number of bin for calibration
+    , int nBinCal_ = 100 // number of bin for calibration
     , bool output_par = true
     , bool useSyst_ = false
     , TString method_ = "DNNOsMuonHLTJpsiMu"

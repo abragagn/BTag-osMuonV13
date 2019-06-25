@@ -68,10 +68,11 @@ class PDAnalyzer: public virtual PDAnalyzerUtil
     TString outputFile;
     float muonIdWp;
     TString process;
-    TString osMuonTagMvaMethod;
 
     //OTHER VARIABLES
     int nselMu;
+    float pTot;
+    float evtTot;
 
     // HISTOGRAMS
 
