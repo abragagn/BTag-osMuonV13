@@ -1,0 +1,201 @@
+
+Processing fitMVAv2.C+("ntuples/ntuBuMC2018.root")...
+----- Parameters -----
+file_ = ntuples/ntuBuMC2018.root
+method_ = DNNOsMuonHLTJpsiMu
+useTightSelection_ = 1
+nEvents_ = -1
+nBinCal_ = 100
+
+----- BEGIN CODE
+----- FILE OPEN
+----- BOOKING COMPLETED
+----- BEGIN LOOP
+----- at event 1/261516
+
+----- EVENTS LOOP ENDED
+nTot 177378
+nRT 58168
+nWT 28037
+nNT 91173
+
+Base efficiency = 48.5996%
+Base mistag = 32.5236%
+Base power = 5.93738%
+
+Per-event-mistag power (not calibrated) = 10.2652% (+72.8918%)
+
+BIN 3 -- wCalc 0.0361372 -- nRT 8 +- 2 -- nWT 0 +- 0 -- wMeas 0 +- 0.131914
+
+BIN 4 -- wCalc 0.0453817 -- nRT 11 +- 3 -- nWT 0 +- 0 -- wMeas 0 +- 0.0993555
+
+BIN 5 -- wCalc 0.0554597 -- nRT 37 +- 6 -- nWT 4 +- 2 -- wMeas 0.097561 +- 0.0573086
+
+BIN 6 -- wCalc 0.0653041 -- nRT 78 +- 8 -- nWT 5 +- 2 -- wMeas 0.060241 +- 0.0322257
+
+BIN 7 -- wCalc 0.0753709 -- nRT 156 +- 12 -- nWT 17 +- 4 -- wMeas 0.0982659 +- 0.0251103
+
+BIN 8 -- wCalc 0.0854315 -- nRT 245 +- 15 -- nWT 22 +- 4 -- wMeas 0.082397 +- 0.0184987
+
+BIN 9 -- wCalc 0.0953646 -- nRT 294 +- 17 -- nWT 30 +- 5 -- wMeas 0.0925926 +- 0.0174298
+
+BIN 10 -- wCalc 0.105255 -- nRT 472 +- 21 -- nWT 48 +- 6 -- wMeas 0.0923077 +- 0.0135124
+
+BIN 11 -- wCalc 0.115443 -- nRT 862 +- 29 -- nWT 91 +- 9 -- wMeas 0.0954879 +- 0.00995808
+
+BIN 12 -- wCalc 0.125481 -- nRT 1501 +- 38 -- nWT 211 +- 14 -- wMeas 0.123248 +- 0.00816856
+
+BIN 13 -- wCalc 0.135242 -- nRT 2023 +- 44 -- nWT 384 +- 19 -- wMeas 0.159535 +- 0.0076063
+
+BIN 14 -- wCalc 0.144835 -- nRT 2086 +- 45 -- nWT 370 +- 19 -- wMeas 0.150651 +- 0.00736166
+
+BIN 15 -- wCalc 0.155015 -- nRT 1944 +- 44 -- nWT 419 +- 20 -- wMeas 0.177317 +- 0.00799444
+
+BIN 16 -- wCalc 0.165126 -- nRT 1721 +- 41 -- nWT 363 +- 19 -- wMeas 0.174184 +- 0.00846541
+
+BIN 17 -- wCalc 0.174969 -- nRT 1684 +- 41 -- nWT 361 +- 19 -- wMeas 0.176528 +- 0.0085903
+
+BIN 18 -- wCalc 0.185179 -- nRT 1629 +- 40 -- nWT 392 +- 19 -- wMeas 0.193963 +- 0.00894735
+
+BIN 19 -- wCalc 0.19511 -- nRT 1608 +- 40 -- nWT 421 +- 20 -- wMeas 0.207491 +- 0.00914684
+
+BIN 20 -- wCalc 0.205025 -- nRT 1723 +- 41 -- nWT 469 +- 21 -- wMeas 0.21396 +- 0.00888985
+
+BIN 21 -- wCalc 0.215238 -- nRT 1841 +- 42 -- nWT 558 +- 23 -- wMeas 0.232597 +- 0.00873704
+
+BIN 22 -- wCalc 0.225135 -- nRT 2044 +- 45 -- nWT 634 +- 25 -- wMeas 0.236744 +- 0.00831237
+
+BIN 23 -- wCalc 0.235166 -- nRT 2009 +- 44 -- nWT 636 +- 25 -- wMeas 0.240454 +- 0.00840746
+
+BIN 24 -- wCalc 0.244969 -- nRT 2091 +- 45 -- nWT 772 +- 27 -- wMeas 0.269647 +- 0.00837375
+
+BIN 25 -- wCalc 0.25488 -- nRT 2119 +- 46 -- nWT 795 +- 28 -- wMeas 0.272821 +- 0.00832859
+
+BIN 26 -- wCalc 0.265018 -- nRT 1924 +- 43 -- nWT 772 +- 27 -- wMeas 0.28635 +- 0.00878477
+
+BIN 27 -- wCalc 0.275031 -- nRT 1831 +- 42 -- nWT 789 +- 28 -- wMeas 0.301145 +- 0.00903753
+
+BIN 28 -- wCalc 0.284959 -- nRT 1687 +- 41 -- nWT 738 +- 27 -- wMeas 0.30433 +- 0.00942332
+
+BIN 29 -- wCalc 0.295043 -- nRT 1604 +- 40 -- nWT 777 +- 27 -- wMeas 0.326333 +- 0.00968055
+
+BIN 30 -- wCalc 0.304917 -- nRT 1488 +- 38 -- nWT 670 +- 25 -- wMeas 0.310473 +- 0.0100465
+
+BIN 31 -- wCalc 0.315005 -- nRT 1420 +- 37 -- nWT 708 +- 26 -- wMeas 0.332707 +- 0.0102912
+
+BIN 32 -- wCalc 0.325099 -- nRT 1340 +- 36 -- nWT 688 +- 26 -- wMeas 0.33925 +- 0.0105909
+
+BIN 33 -- wCalc 0.334935 -- nRT 1189 +- 34 -- nWT 694 +- 26 -- wMeas 0.368561 +- 0.0111847
+
+BIN 34 -- wCalc 0.34501 -- nRT 1115 +- 33 -- nWT 643 +- 25 -- wMeas 0.365757 +- 0.011561
+
+BIN 35 -- wCalc 0.354765 -- nRT 1164 +- 34 -- nWT 714 +- 26 -- wMeas 0.380192 +- 0.011263
+
+BIN 36 -- wCalc 0.364958 -- nRT 1086 +- 32 -- nWT 677 +- 26 -- wMeas 0.384005 +- 0.0116464
+
+BIN 37 -- wCalc 0.375134 -- nRT 993 +- 31 -- nWT 645 +- 25 -- wMeas 0.393773 +- 0.0121339
+
+BIN 38 -- wCalc 0.385104 -- nRT 1026 +- 32 -- nWT 696 +- 26 -- wMeas 0.404181 +- 0.0118784
+
+BIN 39 -- wCalc 0.395072 -- nRT 976 +- 31 -- nWT 721 +- 26 -- wMeas 0.424867 +- 0.0120408
+
+BIN 40 -- wCalc 0.405008 -- nRT 1029 +- 32 -- nWT 756 +- 27 -- wMeas 0.423529 +- 0.0117353
+
+BIN 41 -- wCalc 0.414951 -- nRT 991 +- 31 -- nWT 777 +- 27 -- wMeas 0.43948 +- 0.0118351
+
+BIN 42 -- wCalc 0.425194 -- nRT 1117 +- 33 -- nWT 841 +- 29 -- wMeas 0.42952 +- 0.0112203
+
+BIN 43 -- wCalc 0.435154 -- nRT 1210 +- 34 -- nWT 1005 +- 31 -- wMeas 0.453725 +- 0.010597
+
+BIN 44 -- wCalc 0.445117 -- nRT 1400 +- 37 -- nWT 1222 +- 34 -- wMeas 0.466056 +- 0.00975337
+
+BIN 45 -- wCalc 0.454833 -- nRT 1300 +- 36 -- nWT 1222 +- 34 -- wMeas 0.484536 +- 0.0099559
+
+BIN 46 -- wCalc 0.464606 -- nRT 935 +- 30 -- nWT 896 +- 29 -- wMeas 0.48935 +- 0.0116852
+
+BIN 47 -- wCalc 0.474651 -- nRT 614 +- 24 -- nWT 697 +- 26 -- wMeas 0.531655 +- 0.0138007
+
+BIN 48 -- wCalc 0.484805 -- nRT 471 +- 21 -- nWT 509 +- 22 -- wMeas 0.519388 +- 0.0159719
+
+BIN 49 -- wCalc 0.494848 -- nRT 342 +- 18 -- nWT 393 +- 19 -- wMeas 0.534694 +- 0.0184335
+
+BIN 50 -- wCalc 0.504777 -- nRT 288 +- 16 -- nWT 341 +- 18 -- wMeas 0.54213 +- 0.0199172
+
+BIN 51 -- wCalc 0.514712 -- nRT 228 +- 15 -- nWT 280 +- 16 -- wMeas 0.551181 +- 0.0221472
+
+BIN 52 -- wCalc 0.525057 -- nRT 189 +- 13 -- nWT 248 +- 15 -- wMeas 0.567506 +- 0.0238278
+
+BIN 53 -- wCalc 0.535108 -- nRT 151 +- 12 -- nWT 227 +- 15 -- wMeas 0.600529 +- 0.0254274
+
+BIN 54 -- wCalc 0.544967 -- nRT 122 +- 11 -- nWT 195 +- 13 -- wMeas 0.615142 +- 0.0276525
+
+BIN 55 -- wCalc 0.554879 -- nRT 91 +- 9 -- nWT 178 +- 13 -- wMeas 0.66171 +- 0.0294056
+
+BIN 56 -- wCalc 0.565083 -- nRT 83 +- 9 -- nWT 134 +- 11 -- wMeas 0.617512 +- 0.0334643
+
+BIN 57 -- wCalc 0.575287 -- nRT 99 +- 9 -- nWT 132 +- 11 -- wMeas 0.571429 +- 0.0328014
+
+BIN 58 -- wCalc 0.584762 -- nRT 82 +- 9 -- nWT 127 +- 11 -- wMeas 0.607656 +- 0.0342152
+
+BIN 59 -- wCalc 0.595068 -- nRT 58 +- 7 -- nWT 118 +- 10 -- wMeas 0.670455 +- 0.036321
+
+BIN 60 -- wCalc 0.605181 -- nRT 56 +- 7 -- nWT 120 +- 10 -- wMeas 0.681818 +- 0.0360675
+
+BIN 61 -- wCalc 0.614555 -- nRT 37 +- 6 -- nWT 83 +- 9 -- wMeas 0.691667 +- 0.0436268
+
+BIN 62 -- wCalc 0.624742 -- nRT 35 +- 5 -- nWT 62 +- 7 -- wMeas 0.639175 +- 0.0499742
+
+BIN 63 -- wCalc 0.635037 -- nRT 48 +- 6 -- nWT 73 +- 8 -- wMeas 0.603306 +- 0.045155
+
+BIN 64 -- wCalc 0.644711 -- nRT 31 +- 5 -- nWT 76 +- 8 -- wMeas 0.71028 +- 0.0456852
+
+BIN 65 -- wCalc 0.655262 -- nRT 29 +- 5 -- nWT 56 +- 7 -- wMeas 0.658824 +- 0.0530383
+
+BIN 66 -- wCalc 0.665904 -- nRT 17 +- 4 -- nWT 55 +- 7 -- wMeas 0.763889 +- 0.0535829
+
+BIN 67 -- wCalc 0.674253 -- nRT 15 +- 3 -- nWT 43 +- 6 -- wMeas 0.741379 +- 0.0613897
+
+BIN 68 -- wCalc 0.684979 -- nRT 9 +- 3 -- nWT 40 +- 6 -- wMeas 0.816327 +- 0.0618077
+
+BIN 69 -- wCalc 0.695859 -- nRT 10 +- 3 -- nWT 38 +- 6 -- wMeas 0.791667 +- 0.0645719
+
+BIN 70 -- wCalc 0.704791 -- nRT 11 +- 3 -- nWT 39 +- 6 -- wMeas 0.78 +- 0.0640101
+
+BIN 71 -- wCalc 0.71468 -- nRT 5 +- 2 -- nWT 18 +- 4 -- wMeas 0.782609 +- 0.0975704
+
+BIN 72 -- wCalc 0.725729 -- nRT 9 +- 3 -- nWT 17 +- 4 -- wMeas 0.653846 +- 0.0976043
+
+BIN 73 -- wCalc 0.73341 -- nRT 3 +- 1 -- nWT 20 +- 4 -- wMeas 0.869565 +- 0.0874442
+
+BIN 74 -- wCalc 0.745623 -- nRT 8 +- 2 -- nWT 23 +- 4 -- wMeas 0.741935 +- 0.0856386
+
+BIN 75 -- wCalc 0.75496 -- nRT 3 +- 1 -- nWT 8 +- 2 -- wMeas 0.727273 +- 0.150154
+
+BIN 76 -- wCalc 0.762767 -- nRT 3 +- 1 -- nWT 11 +- 3 -- wMeas 0.785714 +- 0.128257
+
+BIN 77 -- wCalc 0.773849 -- nRT 2 +- 1 -- nWT 6 +- 2 -- wMeas 0.75 +- 0.177083
+
+BIN 78 -- wCalc 0.784503 -- nRT 1 +- 1 -- nWT 8 +- 2 -- wMeas 0.888889 +- 0.151809
+
+BIN 79 -- wCalc 0.793036 -- nRT 3 +- 1 -- nWT 3 +- 1 -- wMeas 0.5 +- 0.188986
+
+BIN 80 -- wCalc 0.804093 -- nRT 0 +- 0 -- nWT 4 +- 2 -- wMeas 1 +- 0.234172
+
+BIN 81 -- wCalc 0.813965 -- nRT 2 +- 1 -- nWT 0 +- 0 -- wMeas 0 +- 0.381843
+
+BIN 82 -- wCalc 0.826155 -- nRT 2 +- 1 -- nWT 2 +- 1 -- wMeas 0.5 +- 0.223611
+
+
+Per-event-mistag power (calibrated bins) = 9.34399% +- 0 (+57.3756%)
+
+
+ FCN=80.8201 FROM MIGRAD    STATUS=CONVERGED      50 CALLS          51 TOTAL
+                     EDM=5.46975e-09    STRATEGY= 1      ERROR MATRIX ACCURATE 
+  EXT PARAMETER                                   STEP         FIRST   
+  NO.   NAME      VALUE            ERROR          SIZE      DERIVATIVE 
+   1  p0          -3.16501e-03   3.60553e-03   6.56105e-06   4.65269e-02
+   2  p1           1.07356e+00   1.18420e-02   2.15490e-05   6.27877e-03
+
+q = -0.00316501 +- 0.00360553 [0.87782 s.d.]
+m = 1.07356 +- 0.011842 [6.21205 s.d.]
+(int) 1
