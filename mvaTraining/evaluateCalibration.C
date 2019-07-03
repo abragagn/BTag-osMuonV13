@@ -182,7 +182,7 @@ int evaluateCalibration(TString file_ = "ntuples/ntuBuData2018.root"
     reader.BookMVA( method_, methodpath + method_ + ".weights.xml" );
 
     //HISTOGRAMS BOOKING
-    int nBinsMva = 100;
+    int nBinsMva = 200;
     auto *mistag    = new TH1F( "mistag",    "mistag",    nBinsMva, 0.0, 1.0 );
     auto *mistag_RT = new TH1F( "mistag_RT", "mistag_RT", nBinsMva, 0.0, 1.0 );
     auto *mistag_WT = new TH1F( "mistag_WT", "mistag_WT", nBinsMva, 0.0, 1.0 );
@@ -224,7 +224,7 @@ int evaluateCalibration(TString file_ = "ntuples/ntuBuData2018.root"
         double errp = sqrt( pow(8*evtW-4,2)*pow(evtWerr,2) );
         totalPerr += pow(evtWeight*errp,2);
 
-        cout<<evtWpred<<"   "<<evtW<<" +- "<<evtWerr<<endl;
+        //cout<<evtWpred<<"   "<<evtW<<" +- "<<evtWerr<<endl;
 
         mistag->Fill(evtW, evtWeight);
 
@@ -279,6 +279,19 @@ int evaluateCalibration(TString file_ = "ntuples/ntuBuData2018.root"
     cout<<endl;
     cout<<"Per-event-mistag power = "<<100.*totalP<<" +- "<<100.*totalPerr<<" % (+"<<100*(totalP - pBase)/pBase<<"%)"<<endl;
     cout<<endl;
+
+
+    auto *c2 = new TCanvas();
+    gPad->SetGrid();
+    // mistag->SetMarkerStyle(20);
+    // mistag->SetMarkerSize(.75);
+    mistag->SetLineWidth(2);
+    mistag->SetTitle("mistagDistribution " + process_);
+    mistag->GetXaxis()->SetTitle("mistag probability");
+    mistag->GetXaxis()->SetNdivisions(10+100*(int)(nBins_/10), kFALSE);
+    gStyle->SetOptStat(0);
+    mistag->Draw("HIST L");
+    c2->Print("mistagDistribution " + process_ + ".pdf");
 
     f->Close();
     delete f;
@@ -380,7 +393,7 @@ pair<double, double> CountEventsWithFit(TH1 *hist)
 
     auto c5 = new TCanvas();
     hist->SetMarkerStyle(20);
-    hist->SetMarkerSize(.75);
+    hist->SetMarkerSize(.5);
     TFitResultPtr r = hist->Fit("func","RLSQ");
     int fitstatus = r;
     int covstatus = r->CovMatrixStatus();

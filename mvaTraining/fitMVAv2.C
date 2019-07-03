@@ -115,6 +115,7 @@ int fitMVAv2(TString file_ = "ntuples/ntuBsDG0MC2018.root"
     double evtW[2] = {-1., -1.}; // per-event mistag rate
     double totalP = 0.; // total tagging power
     double totalPbinned = 0.;
+    double totalPbinned_err = 0.;
 
     double pass = (1.-0.)/nBinCal_; // (1-0) -> mva score range
 
@@ -301,10 +302,9 @@ int fitMVAv2(TString file_ = "ntuples/ntuBsDG0MC2018.root"
 
     vector<double> vX;
     vector<double> vY;
-    vector<double> vEX;
     vector<double> vEXL;
     vector<double> vEXH;
-    vector<double> vEY;
+    vector<double> vY;
     vector<double> vEYL;
     vector<double> vEYH;
 
@@ -350,18 +350,18 @@ int fitMVAv2(TString file_ = "ntuples/ntuBsDG0MC2018.root"
             wMeas = calWT.first/(calWT.first + calRT.first);
             wMeasErrH = TEfficiency::AgrestiCoull(calWT.first+calRT.first, calWT.first,0.6827,true) - wMeas;
             wMeasErrL = wMeas - TEfficiency::AgrestiCoull(calWT.first+calRT.first, calWT.first,0.6827,false);
-            wMeasErr = (wMeasErrH + wMeasErrL)/2;
+            wMeasErr = max(wMeasErrH, wMeasErrL);
         }
 
         vX.push_back( wCalc[j] );
         vEXL.push_back( wCalc[j] - ((double)j*pass) );
         vEXH.push_back( ((double)j*pass+pass) - wCalc[j] );
         vY.push_back( wMeas ); // measured mistag
-        vEY.push_back(wMeasErr);
         vEYL.push_back(wMeasErrL);
         vEYH.push_back(wMeasErrH);
 
         totalPbinned += (calRT.first+calWT.first)*pow(1-2*wMeas,2);
+        // totalPbinned_err
         cout<<"BIN "<<j<<" -- wCalc "<<wCalc[j];
         cout<<" -- nRT "<<(int)calRT.first<<" +- "<<(int)calRT.second<<" -- nWT "<<(int)calWT.first<<" +- "<<(int)calWT.second;
         cout<<" -- wMeas "<<wMeas <<" +- "<<wMeasErr<<endl<<endl;
@@ -370,7 +370,7 @@ int fitMVAv2(TString file_ = "ntuples/ntuBsDG0MC2018.root"
     totalPbinned /= (double)nTot;
 
     cout<<endl;
-    cout<<"Per-event-mistag power (calibrated bins) = "<<100.*totalPbinned<<"% (+"<<100*(totalPbinned - pBase)/pBase<<"%)"<<endl;
+    cout<<"Per-event-mistag power (calibrated bins) = "<<100.*totalPbinned<<"% +- "<<100.*totalPbinned_err<<" (+"<<100*(totalPbinned - pBase)/pBase<<"%)"<<endl;
     cout<<endl;
 
     cout<<endl;
@@ -387,7 +387,7 @@ int fitMVAv2(TString file_ = "ntuples/ntuBsDG0MC2018.root"
     auto *gCalErr = new TGraphAsymmErrors(vX.size(),&vX[0],&vY[0],&vEXL[0],&vEXH[0],&vEYL[0],&vEYH[0]);
     auto *fCal = new TF1("osMuonCal","[0]+[1]*x",0.,1.);
 
-    gCal->Fit("osMuonCal");
+    TFitResultPtr fitresultCal = gCal->Fit("osMuonCal","S");
     fCal = gCal->GetFunction("osMuonCal");
 
     double q = fCal->GetParameter(0);
@@ -460,14 +460,17 @@ int fitMVAv2(TString file_ = "ntuples/ntuBsDG0MC2018.root"
     mva->SetTitle("dnnDistribution " + process_);
     mva->GetXaxis()->SetTitle("dnn score (right tag probability)");
     mva->GetXaxis()->SetNdivisions(10+100*(int)(nBins_/10), kFALSE);
-    mva->Draw("PL");
-    if(output_) c2->Print("dnnDistribution " + process_ + ".pdf");
+    gStyle->SetOptStat(0);
+    mva->Draw("HIST PL");
+    if(output_) c2->Print("dnnDistribution_" + process_ + ".pdf");
+    gStyle->SetOptStat(10);
 
     //FUNCTIONS
     if(output_){
         auto *fo = new TFile("OSMuonTaggerCalibration" + process_ + ".root", "RECREATE");
         fo->cd();
         fCal->Write();
+        fitresultCal->Write();
         fo->Close();
         delete fo;
     }

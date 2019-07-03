@@ -29,6 +29,8 @@ void customFOM( TString filename = "./2017/ntuBuMC2017.root"
     , TString var = "muoPt"
     , TString cutDir = "down"
     , TString cutEvt_ = ""
+    , float min = -1
+    , float max = -1
     , bool verbose = false )
 {
     if((cutDir != "down") && (cutDir != "up")) return;
@@ -41,8 +43,8 @@ void customFOM( TString filename = "./2017/ntuBuMC2017.root"
     TTree *t = (TTree*)f ->Get("PDsecondTree");
 
     int nBins=20;
-    float min=t->GetMinimum(var);
-    float max=t->GetMaximum(var);
+    if(min == -1) min=t->GetMinimum(var);
+    if(max == -1) max=t->GetMaximum(var);
 
     TH1F *Tot = new TH1F( "Tot", "Tot", 100, 5.2, 5.65 );
     TH1F *Sgn = new TH1F( "Sgn", "Sgn", nBins, min, max );
@@ -149,18 +151,11 @@ void customFOM( TString filename = "./2017/ntuBuMC2017.root"
     c1->Print("FOM_" + var + ".png");
     c1->DrawClone();
 
+    TCanvas *c2 = new TCanvas();
+    grW->Draw(opt);
+    c1->DrawClone();
+
     cout<<"best cut = "<<bestCut<<endl;
     cout<<"(P="<<100*bestP<<"%, eff="<<100*bestE<<"%, w="<<100*bestW<<"%)"<<endl;
 
-    delete Tot;
-    delete Sgn;
-    delete Bkg;
-    delete grP;
-    delete grE;
-    delete grW;
-    delete c1;
-    delete t;
-    delete f;
-
-    return;
 }
