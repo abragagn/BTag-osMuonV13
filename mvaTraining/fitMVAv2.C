@@ -217,7 +217,7 @@ int fitMVAv2(TString file_ = "ntuples/ntuBsDG0MC2018.root"
     if(nEvents_ == -1) nEvents_ = t->GetEntries();
 
     for(int i=0; i<nEvents_; ++i){
-        if(i%100000==0) cout<<"----- at event "<<i<<endl;
+        if(i%1000000==0) cout<<"----- at event "<<i+1<<"/"<<nEvents_<<endl;
 
         t->GetEntry(i);
 
@@ -304,7 +304,6 @@ int fitMVAv2(TString file_ = "ntuples/ntuBsDG0MC2018.root"
     vector<double> vY;
     vector<double> vEXL;
     vector<double> vEXH;
-    vector<double> vY;
     vector<double> vEYL;
     vector<double> vEYH;
 
@@ -361,7 +360,7 @@ int fitMVAv2(TString file_ = "ntuples/ntuBsDG0MC2018.root"
         vEYH.push_back(wMeasErrH);
 
         totalPbinned += (calRT.first+calWT.first)*pow(1-2*wMeas,2);
-        // totalPbinned_err
+        // totalPbinned_err //TODO
         cout<<"BIN "<<j<<" -- wCalc "<<wCalc[j];
         cout<<" -- nRT "<<(int)calRT.first<<" +- "<<(int)calRT.second<<" -- nWT "<<(int)calWT.first<<" +- "<<(int)calWT.second;
         cout<<" -- wMeas "<<wMeas <<" +- "<<wMeasErr<<endl<<endl;
@@ -386,6 +385,8 @@ int fitMVAv2(TString file_ = "ntuples/ntuBsDG0MC2018.root"
     auto *gCal = new TGraphAsymmErrors(vX.size(),&vX[0],&vY[0],0,0,&vEYL[0],&vEYH[0]);
     auto *gCalErr = new TGraphAsymmErrors(vX.size(),&vX[0],&vY[0],&vEXL[0],&vEXH[0],&vEYL[0],&vEYH[0]);
     auto *fCal = new TF1("osMuonCal","[0]+[1]*x",0.,1.);
+    gCal->SetName("osMuonCalGraph");
+    gCalErr->SetName("osMuonCalGraphBins");
 
     TFitResultPtr fitresultCal = gCal->Fit("osMuonCal","S");
     fCal = gCal->GetFunction("osMuonCal");
@@ -470,6 +471,8 @@ int fitMVAv2(TString file_ = "ntuples/ntuBsDG0MC2018.root"
         auto *fo = new TFile("OSMuonTaggerCalibration" + process_ + ".root", "RECREATE");
         fo->cd();
         fCal->Write();
+        gCal->Write();
+        // gCalErr->Write();
         fitresultCal->Write();
         fo->Close();
         delete fo;
@@ -533,10 +536,10 @@ pair<double, double> CountEventsWithFit(TH1 *hist)
     TAxis *xaxis = hist->GetXaxis();
     int binx1 = xaxis->FindBin(x1_);
     int binx2 = xaxis->FindBin(x2_);
-    double x2 = hist->GetBinContent(binx2);
-    double x1 = hist->GetBinContent(binx1);
-    double y2 = hist->GetBinCenter(binx2);
-    double y1 = hist->GetBinCenter(binx1);
+    double y2 = hist->GetBinContent(binx2);
+    double y1 = hist->GetBinContent(binx1);
+    double x2 = hist->GetBinCenter(binx2);
+    double x1 = hist->GetBinCenter(binx1);
     double m = (y2-y1)/(x2-x1);
     if(m>0) m = -1;
 
