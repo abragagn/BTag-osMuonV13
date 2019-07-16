@@ -532,23 +532,19 @@ pair<double, double> CountEventsWithFit(TH1 *hist)
     func->SetParLimits(2, 0.001, 0.1);
     func->SetParLimits(4, 0.001, 0.1);
 
-    //BKG    
-    TAxis *xaxis = hist->GetXaxis();
-    int binx1 = xaxis->FindBin(x1_);
-    int binx2 = xaxis->FindBin(x2_);
-    double y2 = hist->GetBinContent(binx2);
-    double y1 = hist->GetBinContent(binx1);
-    double x2 = hist->GetBinCenter(binx2);
-    double x1 = hist->GetBinCenter(binx1);
-    double m = (y2-y1)/(x2-x1);
-    if(m>0) m = -1;
+    //BKG
 
-    func->SetParameter(5, 10);
-    func->SetParameter(6, m);
+    TF1 linear("linear", "pol1", x1_, x2_);
+    hist->Fit(&linear, "LRQ");
+
+    func->SetParameter(5, linear.GetParameter(0));
+    func->SetParameter(6, linear.GetParameter(1));
+
 
     if(lowStat){
-        func->SetParameter(5, 1);
-        func->SetParLimits(5, 0, 1e3);
+        TF1 con("con", "pol0", x1_, x2_);
+        hist->Fit(&con, "LRQ");
+        func->SetParameter(5, con.GetParameter(0));
     }
 
     if(highStat){
