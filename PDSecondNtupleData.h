@@ -107,6 +107,7 @@ void initTree() {
 
     setBranch( "hltJpsiMu", &hltJpsiMu , "hltJpsiMu/I" , &b_hltJpsiMu );
     setBranch( "hltJpsiTrkTrk", &hltJpsiTrkTrk , "hltJpsiTrkTrk/I" , &b_hltJpsiTrkTrk );
+    setBranch( "hltJpsiTrk", &hltJpsiTrk , "hltJpsiTrk/I" , &b_hltJpsiTrk );
 }
 
 float ssbPt, ssbEta, ssbPhi, ssbMass, jpsiMass, ssbDxy, ssbExy, ssbDz, ssbEz;

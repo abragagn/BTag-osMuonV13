@@ -152,7 +152,7 @@ int fitMVAv2(TString file_ = "ntuples/ntuBsDG0MC2018.root"
     int osMuon, osMuonTag, osMuonCharge, ssbLund;
     //EVENT VARIABLES
     float ssbMass;
-    int evtWeight, hltJpsiMu, ssbIsTight;
+    int evtWeight, hltJpsiMu, hltJpsiTrkTrk, hltJpsiTrk, ssbIsTight;
 
     //BOOKING
     t->SetBranchAddress("muoPt", &muoPt);
@@ -176,6 +176,8 @@ int fitMVAv2(TString file_ = "ntuples/ntuBsDG0MC2018.root"
     t->SetBranchAddress("ssbLund", &ssbLund);
     t->SetBranchAddress("ssbMass", &ssbMass);
     t->SetBranchAddress("hltJpsiMu", &hltJpsiMu);
+    t->SetBranchAddress("hltJpsiTrkTrk", &hltJpsiTrkTrk);
+    t->SetBranchAddress("hltJpsiTrk", &hltJpsiTrk);
     t->SetBranchAddress("ssbIsTight", &ssbIsTight);
 
     //COMPUTE MVA
@@ -222,7 +224,8 @@ int fitMVAv2(TString file_ = "ntuples/ntuBsDG0MC2018.root"
         t->GetEntry(i);
 
         //EVENT SELECTION
-        if(!hltJpsiMu) continue;
+        if(hltJpsiMu) continue;
+        if(!hltJpsiTrk) continue;
         if(useTightSelection_ && !ssbIsTight) continue;
         hMassTot->Fill(ssbMass, evtWeight);
 

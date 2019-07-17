@@ -37,7 +37,9 @@ PDAnalyzer::PDAnalyzer() {
 
     setUserParameter( "outputFile", "ntu.root" );
 
-    setUserParameter( "muonIdWp", "0.21" ); 
+    setUserParameter( "muonIdWp", "0.21" );
+
+    setUserParameter( "useJpsiTrk", "false" ); 
 
     setUserParameter( "ptCut", "40.0" ); //needed for paolo's code for unknow reasons
 
@@ -46,7 +48,6 @@ PDAnalyzer::PDAnalyzer() {
 
 PDAnalyzer::~PDAnalyzer() {
 }
-
 
 
 void PDAnalyzer::beginJob() {
@@ -63,7 +64,9 @@ void PDAnalyzer::beginJob() {
 
     getUserParameter( "outputFile", outputFile );
 
-    getUserParameter( "muonIdWp", muonIdWp ); 
+    getUserParameter( "muonIdWp", muonIdWp );
+
+    getUserParameter( "useJpsiTrk", useJpsiTrk ); 
 
     getUserParameter( "ptCut", ptCut ); //needed for paolo's code for unknow reasons
 
@@ -79,11 +82,14 @@ void PDAnalyzer::beginJob() {
     bool osInit = inizializeOSMuonCalibration();
     if(!osInit) cout<<endl<<"!!! FAILED TO INIZIALIZED TAG CALIBRATION"<<endl<<endl;
 
+
     if(process=="BsJPsiPhi") SetBsMassRange(5.20, 5.65);
     if(process=="BuJPsiK") SetBuMassRange(5.1, 5.65);
 
     pTot = 0;
     evtTot = 0;
+
+    cout<<"beginJob() DONE"<<endl;
 
     return;
 
@@ -150,7 +156,7 @@ bool PDAnalyzer::analyze( int entry, int event_file, int event_tot ) {
 
 // additional features
     computeMuonVar();
-    inizializeTagVariables();
+    inizializeOsMuonTagVars();
     tWriter->Reset();
     convSpheCart(jetPt, jetEta, jetPhi, jetPx, jetPy, jetPz);
     convSpheCart(muoPt, muoEta, muoPhi, muoPx, muoPy, muoPz);
@@ -166,12 +172,23 @@ bool PDAnalyzer::analyze( int entry, int event_file, int event_tot ) {
 
     bool jpsimu = false;
     bool jpsitktk = false;
+    bool jpsitk = false;
 
     if(hlt(PDEnumString::HLT_Dimuon0_Jpsi3p5_Muon2_v)||hlt(PDEnumString::HLT_Dimuon0_Jpsi_Muon_v)) jpsimu = true;
     if(hlt(PDEnumString::HLT_DoubleMu4_JpsiTrkTrk_Displaced_v)) jpsitktk =  true;
+    if(hlt(PDEnumString::HLT_DoubleMu4_JpsiTrk_Displaced_v)) jpsitk = true;
 
-    if( !jpsimu ) return false;
-    SetJpsiMuCut();
+    bool hlttrk = false;
+    if(process=="BsJPsiPhi") hlttrk = jpsitktk;
+    if(process=="BuJPsiK") hlttrk = jpsitk;
+
+    if( jpsimu ){
+        SetJpsiMuCut();  
+    }else{
+        if( useJpsiTrk && hlttrk) SetJpsiTrkTrkCut();
+        else return false;
+    }
+
 
 //------------------------------------------------SEARCH FOR SS---------------------------------------
 
@@ -238,7 +255,7 @@ bool PDAnalyzer::analyze( int entry, int event_file, int event_tot ) {
     int ssbPVT = GetBestPV(ssbSVT, tB);
     if(ssbPVT < 0) return false;
 
-    setVtxForTag(ssbSVT, ssbPVT);
+    setVtxOsMuonTag(ssbSVT, ssbPVT);
     evtTot += evtWeight;
 
     //FILLING SS
@@ -263,13 +280,16 @@ bool PDAnalyzer::analyze( int entry, int event_file, int event_tot ) {
 
     (tWriter->hltJpsiMu) = jpsimu;
     (tWriter->hltJpsiTrkTrk) = jpsitktk;
+    (tWriter->hltJpsiTrk) = jpsitk;
     
     (tWriter->evtWeight) = evtWeight;
     (tWriter->evtNb) = ListLongLivedB.size();
 
-    hmass_ssB->Fill(svtMass->at(ssbSVT), evtWeight);
+    if(!jpsimu) hmass_ssB->Fill(svtMass->at(ssbSVT), evtWeight);
     
 //-----------------------------------------OPPOSITE SIDE-----------------------------------------
+
+    makeOsMuonTagging();
 
     int bestMuIndex = getOsMuon();
     int tagDecision = getOsMuonTag();
@@ -285,22 +305,23 @@ bool PDAnalyzer::analyze( int entry, int event_file, int event_tot ) {
 
     (tWriter->osMuon) = 1;
     float osMuonTagMvaValue = getOsMuonTagMvaValue();
-    pair<float,float> osMuonTagMistag = getOsMuonTagMistagProb();
+    float osMuonTagMistag = getOsMuonTagMistagProbCalProcess();
     (tWriter->osMuonTagMvaValue) = osMuonTagMvaValue;
-    (tWriter->osMuonTagMistag) = osMuonTagMistag.first;
+    (tWriter->osMuonTagMistag) = osMuonTagMistag;
 
-    pTot += evtWeight*pow(1-2*osMuonTagMistag.first,2);
-    cout<<osMuonTagMistag.first<<" +- "<<osMuonTagMistag.second<<endl;
+    // cout<<getOsMuonTagMistagProbRaw()<<"   "<<getOsMuonTagMistagProbCalProcess()<<"   "<<getOsMuonTagMistagProbCalProcessBuBs()<<endl;
 
-    hmass_ssB_os->Fill(svtMass->at(ssbSVT), evtWeight);
+    pTot += evtWeight*pow(1-2*osMuonTagMistag,2);
+
+    if(!jpsimu) hmass_ssB_os->Fill(svtMass->at(ssbSVT), evtWeight);
 
     if( TMath::Sign(1, ssBLund) == tagDecision ){ 
-        hmass_ssB_osRT->Fill(svtMass->at(ssbSVT), evtWeight);
+        if(!jpsimu) hmass_ssB_osRT->Fill(svtMass->at(ssbSVT), evtWeight);
         (tWriter->osMuonTag) = 1 ;
     }
 
     if( TMath::Sign(1, ssBLund) != tagDecision ){
-        hmass_ssB_osWT->Fill(svtMass->at(ssbSVT), evtWeight);
+        if(!jpsimu) hmass_ssB_osWT->Fill(svtMass->at(ssbSVT), evtWeight);
         (tWriter->osMuonTag) = 0 ;
     }
 
@@ -563,14 +584,14 @@ bool PDAnalyzer::analyze( int entry, int event_file, int event_tot ) {
     //CHARGE CORRELATION 
     if( muoAncestor >=0 ){
         if( TMath::Sign(1, ssBLund) == -1*trkCharge->at(itkmu) ){
-            hmass_ssB_osCC->Fill(svtMass->at(ssbSVT), evtWeight);
+            if(!jpsimu) hmass_ssB_osCC->Fill(svtMass->at(ssbSVT), evtWeight);
             (tWriter->osMuonChargeInfo) = 1 ;
         }else{
-            hmass_ssB_osWC->Fill(svtMass->at(ssbSVT), evtWeight);
+            if(!jpsimu) hmass_ssB_osWC->Fill(svtMass->at(ssbSVT), evtWeight);
             (tWriter->osMuonChargeInfo) = 0 ;
         }
     }else{
-        hmass_ssB_osRC->Fill(svtMass->at(ssbSVT), evtWeight);
+        if(!jpsimu) hmass_ssB_osRC->Fill(svtMass->at(ssbSVT), evtWeight);
         (tWriter->osMuonChargeInfo) = 2 ;
     }
 
@@ -601,17 +622,6 @@ void PDAnalyzer::endJob() {
 
         cout<<"#B    eff%    w%    P%"<<endl;
         cout<< hmass_ssB->Integral()<<" "<<eff*100<<" "<<w*100<<" "<<power*100<<endl;
-    }else{
-        float eff = CountEventsWithFit(hmass_ssB_os, process) / CountEventsWithFit(hmass_ssB, process);
-        float w  = CountEventsWithFit(hmass_ssB_osWT, process) / CountEventsWithFit(hmass_ssB_os, process);
-        float power = eff*pow(1-2*w, 2);
-        float tot = CountEventsWithFit(hmass_ssB_osCC, process ) + CountEventsWithFit(hmass_ssB_osWC, process) + CountEventsWithFit(hmass_ssB_osRC, process);
-
-        cout<<"CC   WC  RC"<<endl;
-        cout<< CountEventsWithFit(hmass_ssB_osCC, process)/tot<<" "<< CountEventsWithFit(hmass_ssB_osWC, process)/tot<<" "<< CountEventsWithFit(hmass_ssB_osRC, process)/tot<<endl<<endl;
-
-        cout<<"#B    eff%    w%    P%"<<endl;
-        cout<< CountEventsWithFit(hmass_ssB, process)<<" "<<eff*100<<" "<<w*100<<" "<<power*100<<endl;
     }
 
     pTot /= evtTot;
