@@ -230,11 +230,13 @@ int fitMVAv2(TString file_ = "ntuples/ntuBsDG0MC2018.root"
         hMassTot->Fill(ssbMass, evtWeight);
 
         //MUON SELECTION
-        if(!osMuon){
+        bool skip = false;
+        if(muoSoftMvaValue <= muonIDwp_) skip = true;
+
+        if(!osMuon || skip){
             hMassNT->Fill(ssbMass, evtWeight);
             continue;
         }
-        if(muoSoftMvaValue <= muonIDwp_) continue;
 
         //TAGGING
         mvaValue = reader.EvaluateMVA(method_);
