@@ -224,16 +224,17 @@ int fitMVAv2(TString file_ = "ntuples/ntuBsDG0MC2018.root"
         t->GetEntry(i);
 
         //EVENT SELECTION
-        if(hltJpsiMu) continue;
-        if(!hltJpsiTrk) continue;
+        if(!hltJpsiMu) continue;
+        //if(hltJpsiTrk) continue;
         if(useTightSelection_ && !ssbIsTight) continue;
         hMassTot->Fill(ssbMass, evtWeight);
 
         //MUON SELECTION
         bool skip = false;
         if(muoSoftMvaValue <= muonIDwp_) skip = true;
+        if(!osMuon) skip = true;
 
-        if(!osMuon || skip){
+        if(kip){
             hMassNT->Fill(ssbMass, evtWeight);
             continue;
         }
