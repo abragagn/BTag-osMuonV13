@@ -234,7 +234,7 @@ int fitMVAv2(TString file_ = "ntuples/ntuBsDG0MC2018.root"
         if(muoSoftMvaValue <= muonIDwp_) skip = true;
         if(!osMuon) skip = true;
 
-        if(kip){
+        if(skip){
             hMassNT->Fill(ssbMass, evtWeight);
             continue;
         }
