@@ -210,6 +210,7 @@ int fitMVAv2(TString file_ = "ntuples/ntuBsDG0MC2018.root"
     auto *hMassRT  = new TH1F( "hMassRT","hMassRT", nBins_, min_, max_ );
     auto *hMassWT  = new TH1F( "hMassWT","hMassWT", nBins_, min_, max_ );
     auto *hMassNT  = new TH1F( "hMassNT","hMassNT", nBins_, min_, max_ );
+    auto *hMassTag  = new TH1F( "hMassTag","hMassTag", nBins_, min_, max_ );
 
     cout<<"----- BOOKING COMPLETED"<<endl;
 
@@ -270,21 +271,48 @@ int fitMVAv2(TString file_ = "ntuples/ntuBsDG0MC2018.root"
     cout<<endl<<"----- EVENTS LOOP ENDED"<<endl;
 
     // PERFORMANCE OUTPUT
+    hMassTag->Add(hMassRT, hMassWT);
+
     double nRT = hMassRT->Integral(); //Integral() takes in consideration event weights
     double nWT = hMassWT->Integral();
     double nNT = hMassNT->Integral();
     double nTot = hMassTot->Integral();
+    double nTag = hMassTag->Integral();
+
+    double s_nRT = sqrt(hMassRT->Integral());
+    double s_nWT = sqrt(hMassWT->Integral());
+    double s_nNT = sqrt(hMassNT->Integral());
+    double s_nTot = sqrt(hMassTot->Integral());
+    double s_nTag = sqrt(hMassTag->Integral());
 
     if(isData){ //for data fit mass
-        nTot = CountEventsWithFit(hMassTot).first; //Fit of the total histogram need to be called first
-        nRT = CountEventsWithFit(hMassRT).first;
-        nWT = CountEventsWithFit(hMassWT).first;
-        nNT = CountEventsWithFit(hMassNT).first;
+        pair<double, double> f_nTot = CountEventsWithFit(hMassTot); //Fit of the total histogram need to be called first
+        pair<double, double> f_nRT = CountEventsWithFit(hMassRT);
+        pair<double, double> f_nWT = CountEventsWithFit(hMassWT);
+        pair<double, double> f_nNT = CountEventsWithFit(hMassNT);
+        pair<double, double> f_nTag = CountEventsWithFit(hMassTag);
+
+        nRT = f_nRT.first;
+        nWT = f_nWT.first;
+        nNT = f_nNT.first;
+        nTot = f_nTot.first;
+        nTag = f_nTag.first;
+
+        s_nRT = f_nRT.second;
+        s_nWT = f_nWT.second;
+        s_nNT = f_nNT.second;
+        s_nTot = f_nTot.second;
+        s_nTag = f_nTag.second;
+
     }
 
-    double effBase = (double)(nRT+nWT)/(nRT+nWT+nNT);
+    double effBase = (double)(nTag)/(nTag+nNT);
     double wBase = (double)nWT/(nRT+nWT);
     double pBase = effBase*pow(1.-2.*wBase,2);
+
+    double sigma_effBase = sqrt( ( pow(nTag,2)*pow(s_nNT,2) + pow(nNT,2)*pow(s_nTag,2) )/pow(nTag+nNT,4) );
+    double sigma_wBase = 0;
+    double sigma_pBase = 0;
 
     cout<<"nTot "<<nTot<<endl;
     cout<<"nRT "<<nRT<<endl;
@@ -292,9 +320,9 @@ int fitMVAv2(TString file_ = "ntuples/ntuBsDG0MC2018.root"
     cout<<"nNT "<<nNT<<endl;
 
     cout<<endl;
-    cout<<"Base efficiency = "<<100*effBase<<"%"<<endl;
-    cout<<"Base mistag = "<<100*wBase<<"%"<<endl;
-    cout<<"Base power = "<<100*pBase<<"%"<<endl;
+    cout<<"Base efficiency = "<<100*effBase<<" +- "<<100*sigma_effBase<<" %"<<endl;
+    cout<<"Base mistag = "<<100*wBase<<" +- "<<100*sigma_wBase<<" %"<<endl;
+    cout<<"Base power = "<<100*pBase<<" +- "<<100*sigma_pBase<<" %"<<endl;
 
     totalP /= (double)(nRT+nWT+nNT);
     cout<<endl;
@@ -365,12 +393,24 @@ int fitMVAv2(TString file_ = "ntuples/ntuBsDG0MC2018.root"
         vEYL.push_back(wMeasErrL);
         vEYH.push_back(wMeasErrH);
 
-        totalPbinned += (calRT.first+calWT.first)*pow(1-2*wMeas,2);
-        // totalPbinned_err //TODO
+        double D2 = pow(1-2*wMeas,2);
+        double D2Err = wMeasErr*abs(8*wMeas-4);
+        double ei = (calRT.first+calWT.first);
+        double eierr = sqrt(pow(calRT.second,2)+pow(calWT.second,2));
+
+        totalPbinned += ei*D2;
+
+        double p_err = sqrt(pow(ei,2)*pow(D2Err,2)+pow(D2,2)*pow(eierr,2));
+        totalPbinned_err += pow(p_err,2);
+
         cout<<"BIN "<<j<<" -- wCalc "<<wCalc[j];
         cout<<" -- nRT "<<(int)calRT.first<<" +- "<<(int)calRT.second<<" -- nWT "<<(int)calWT.first<<" +- "<<(int)calWT.second;
         cout<<" -- wMeas "<<wMeas <<" +- "<<wMeasErr<<endl<<endl;
     }
+
+    totalPbinned_err = sqrt(totalPbinned_err);
+
+    totalPbinned_err = sqrt( (pow(totalPbinned,2)*pow(s_nTot,2) + pow(nTot,2)*pow(totalPbinned_err,2)) /pow(nTot,4) );
 
     totalPbinned /= (double)nTot;
 
